@@ -157,9 +157,10 @@ def generate(model: str, prompt: str, host: Optional[str]) -> None:
 @click.option("--prompt-file", "prompt_file", type=click.Path(exists=True), help="File containing prompt to send")
 @click.option("-c", "--concurrent", "concurrency", type=int, default=1, help="Number of concurrent requests")
 @click.option("--timeout", "timeout", type=float, default=30.0, help="Per-request timeout in seconds")
+@click.option('-m', '--model', multiple=True, help='Model(s) to benchmark')
 @click.option("--host", envvar="OLLAMA_HOST", help="Ollama host URL", default=None)
 @click.option("-r", "--response", "response", help="Whether to print full response", default=False, is_flag=True)
-def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrency: int, timeout: float, response: bool, host: Optional[str]) -> None:
+def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrency: int, timeout: float, model: List[str], host: Optional[str], response: bool ) -> None:
     """Send a prompt to every model and report API stats plus timing.
 
     This is a minimal implementation: sequential by default and limited
@@ -178,8 +179,14 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
     async def _main():
         client = OllamaClient(host=host)
         try:
-            models = await client.list_models()
-
+            all_models = await client.list_models()
+            model_names = [m.name for m in all_models]
+            if model:
+                selected_models = [m for m in all_models if m.name in model]
+                if not selected_models:
+                    raise ValueError(f"No matching models found for names: {model}. Available models: {model_names}")
+            else:
+                selected_models = all_models
             # Simple worker that calls generate and times it
             async def run_for_model(m: Model) -> dict:
                 start = asyncio.get_event_loop().time()
@@ -196,7 +203,7 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
 
             results = []
             if concurrency <= 1:
-                for m in models:
+                for m in selected_models:
                     r = await run_for_model(m)
                     results.append(r)
             else:
@@ -207,7 +214,7 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
                     async with sem:
                         return await run_for_model(m)
 
-                tasks = [asyncio.create_task(sem_task(m)) for m in models]
+                tasks = [asyncio.create_task(sem_task(m)) for m in selected_models]
                 for t in asyncio.as_completed(tasks):
                     results.append(await t)
 
