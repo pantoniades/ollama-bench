@@ -35,8 +35,8 @@ except Exception:
 
 # Default prompt used by the benchmark command when none supplied
 DEFAULT_PROMPT = (
-    "Explain plate tectonics in two concise paragraphs suitable for a general audience, "
-    "highlighting causes, main processes, and why it matters for Earth's geography."
+    "Briefly explain plate tectonics in one paragraph suitable for a general audience, "
+    "highlighting causes and why it matters for Earth's geography."
 )
 
 
@@ -185,6 +185,9 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
                 selected_models = [m for m in all_models if m.name in model]
                 if not selected_models:
                     raise ValueError(f"No matching models found for names: {model}. Available models: {model_names}")
+                unknown = [item for item in model if item not in model_names]
+                if unknown:
+                    logger.warning(f"Warning: Unknown model names specified: {unknown}. \nAvailable models: {model_names}")
             else:
                 selected_models = all_models
             # Simple worker that calls generate and times it
