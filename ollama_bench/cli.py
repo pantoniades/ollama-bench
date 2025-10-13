@@ -8,6 +8,7 @@ import asyncio
 import json
 import logging
 import sys
+from datetime import datetime
 from typing import Optional, Sequence, Union
 
 from .models import Model
@@ -29,6 +30,7 @@ try:
 except Exception:
     _RICH_AVAILABLE = False
     _CONSOLE = None
+    logger.info("Rich library not available, falling back to plain text output")
 
 
 # Default prompt used by the benchmark command when none supplied
@@ -42,9 +44,10 @@ DEFAULT_PROMPT = (
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging")
 def cli(verbose: bool) -> None:
     """ollama-bench CLI"""
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-
+    logger.info(f"Starting ollama-bench CLI at {now}, verbose={verbose}")
 
 def _print_models(models: Sequence[Union[str, Model]], fmt: str = "pretty", color: bool = True) -> None:
     """Print models in either 'pretty' (multi-line) or 'compact' (single-line) format.
@@ -152,10 +155,11 @@ def generate(model: str, prompt: str, host: Optional[str]) -> None:
 @cli.command("benchmark")
 @click.option("--prompt", "prompt_text", help="Prompt text to send to each model")
 @click.option("--prompt-file", "prompt_file", type=click.Path(exists=True), help="File containing prompt to send")
-@click.option("--concurrent", "concurrency", type=int, default=1, help="Number of concurrent requests")
+@click.option("-c", "--concurrent", "concurrency", type=int, default=1, help="Number of concurrent requests")
 @click.option("--timeout", "timeout", type=float, default=30.0, help="Per-request timeout in seconds")
 @click.option("--host", envvar="OLLAMA_HOST", help="Ollama host URL", default=None)
-def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrency: int, timeout: float, host: Optional[str]) -> None:
+@click.option("-r", "--response", "response", help="Whether to print full response", default=False, is_flag=True)
+def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrency: int, timeout: float, response: bool, host: Optional[str]) -> None:
     """Send a prompt to every model and report API stats plus timing.
 
     This is a minimal implementation: sequential by default and limited
@@ -188,7 +192,7 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
                     resp = {"error": str(exc)}
                     status = "error"
                 elapsed = asyncio.get_event_loop().time() - start
-                return {"model": m.name, "status": status, "elapsed": elapsed, "response": resp}
+                return {"model": m, "status": status, "elapsed": elapsed, "response": resp}
 
             results = []
             if concurrency <= 1:
@@ -210,15 +214,16 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
             # Print results
             for r in results:
                 if r["status"] == "error":
-                    click.echo(f"Model {r['model']} error: {r['response']['error']}\n", color="red", err=True)
+                    click.echo(f"Model {r['model'].name} error: {r['response']['error']}\n", color="red", err=True)
                     continue
-                click.echo(r["model"], color="green")
+                click.echo(r["model"].name)
                 click.echo(f"  status: {r['status']}")
+                click.echo(f". size: {( r['model'].size / 1024**3):.2f} GB")
                 click.echo(f"  elapsed: {r['elapsed']:.3f}s")
                 click.echo(f". prompt_eval_count: {r['response'].get('prompt_eval_count', '-')}")
                 click.echo(f"  prompt rate: {(r['response']['prompt_eval_count']/ r['response']['prompt_eval_duration']*(10**9)):.2f} tokens/s")
                 click.echo(f"  response rate: {(r['response']['eval_count']/ r['response']['eval_duration']*(10**9)):.3f} tokens/s")
-                #click.echo(f"  response: {json.dumps(r['response'], default=str, indent=2)}")
+                response and click.echo(f"  response: {json.dumps(r['response'], default=str, indent=2)}")
                 click.echo("")
 
         except Exception as exc:
