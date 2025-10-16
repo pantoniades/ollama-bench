@@ -204,7 +204,7 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
             # Print results
             for r in results:
                 if r["status"] == "error":
-                    click.echo(f"Model {r['model'].name} error: {r['response']['error']}\n", color="red", err=True)
+                    click.echo(f"Model {r['model'].name} error: {r['response']['error']}\n", err=True)
                     continue
                 click.echo(r["model"].name)
                 click.echo(f"  status: {r['status']}")

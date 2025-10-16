@@ -110,6 +110,9 @@ ollama-bench benchmark --timeout 60
 
 # Show full response details
 ollama-bench benchmark -r
+
+# Enable verbose logging (note: -v comes before subcommand)
+ollama-bench -v benchmark -m llama2
 ```
 
 The benchmark command shows:
@@ -137,9 +140,18 @@ ollama-bench list-models
 
 - `--verbose` / `-v` - Enable debug logging for troubleshooting
 
+**Important**: Global options must come **before** the subcommand name:
+
 ```bash
+# ✅ CORRECT - verbose flag before subcommand
 ollama-bench -v benchmark -m llama2
+ollama-bench --verbose list-models
+
+# ❌ INCORRECT - verbose flag after subcommand (won't work)
+ollama-bench benchmark -v -m llama2
 ```
+
+This is how Click command groups work - global options belong to the main command, not the subcommands.
 
 ## Development
 
