@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ollama-bench"
+version = "0.1.0"
+description = "CLI tool for benchmarking Ollama LLM models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Philip"}
+]
+dependencies = [
+    "ollama>=0.6.0",
+    "click>=8.0.0",
+    "rich>=14.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+ollama-bench = "ollama_bench.cli:cli"
+
+[tool.setuptools]
+packages = ["ollama_bench"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

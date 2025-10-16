@@ -9,28 +9,18 @@ import json
 import logging
 import sys
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Union, List
 
 from .models import Model
 
 import click
 
 from .client import OllamaClient
+from rich.console import Console
 
 logger = logging.getLogger("ollama_bench")
 
-
-# Optional Rich integration for pretty output
-try:
-    from rich.console import Console
-    from rich.table import Table
-
-    _RICH_AVAILABLE = True
-    _CONSOLE = Console()
-except Exception:
-    _RICH_AVAILABLE = False
-    _CONSOLE = None
-    logger.info("Rich library not available, falling back to plain text output")
+_CONSOLE = Console()
 
 
 # Default prompt used by the benchmark command when none supplied
@@ -52,8 +42,7 @@ def cli(verbose: bool) -> None:
 def _print_models(models: Sequence[Union[str, Model]], fmt: str = "pretty", color: bool = True) -> None:
     """Print models in either 'pretty' (multi-line) or 'compact' (single-line) format.
 
-    color: whether to use color/ANSI Rich formatting. If Rich is not
-    available, falls back to plain text regardless of this flag.
+    color: whether to use color/ANSI Rich formatting (respects NO_COLOR env var).
     """
     def _name(m):
         return m.name if isinstance(m, Model) else str(m)
@@ -61,7 +50,8 @@ def _print_models(models: Sequence[Union[str, Model]], fmt: str = "pretty", colo
     def _get(m, attr, default="-"):
         return getattr(m, attr, default) or default
 
-    use_rich = color and _RICH_AVAILABLE and _CONSOLE is not None
+    # Create a console that respects the color setting
+    console = Console(no_color=not color, force_terminal=color)
 
     if fmt == "pretty":
         for m in models:
@@ -72,18 +62,11 @@ def _print_models(models: Sequence[Union[str, Model]], fmt: str = "pretty", colo
             family = _get(m, "family")
             ctx = _get(m, "context_length")
 
-            if use_rich:
-                _CONSOLE.print(f"[bold green]{name}[/bold green]")
-                _CONSOLE.print(f"  [magenta]size:[/magenta] {size}")
-                _CONSOLE.print(f"  [yellow]params:[/yellow] {params}  [blue]quant:[/blue] {quant}")
-                _CONSOLE.print(f"  [white]family:[/white] {family}  [cyan]ctx:[/cyan] {ctx}")
-                _CONSOLE.print("")
-            else:
-                click.secho(name, fg="green", bold=True)
-                click.echo(f"  size:  {size}")
-                click.echo(f"  params: {params}  quant: {quant}")
-                click.echo(f"  family: {family}  ctx: {ctx}")
-                click.echo("")
+            console.print(f"[bold green]{name}[/bold green]")
+            console.print(f"  [magenta]size:[/magenta] {size}")
+            console.print(f"  [yellow]params:[/yellow] {params}  [blue]quant:[/blue] {quant}")
+            console.print(f"  [white]family:[/white] {family}  [cyan]ctx:[/cyan] {ctx}")
+            console.print("")
 
     else:  # compact
         for i, m in enumerate(models, start=1):
@@ -94,10 +77,7 @@ def _print_models(models: Sequence[Union[str, Model]], fmt: str = "pretty", colo
             family = _get(m, "family")
             ctx = _get(m, "context_length")
 
-            if use_rich:
-                _CONSOLE.print(f"[cyan]{i}[/cyan] [green]{name}[/green]  [magenta]{size}[/magenta]  [yellow]{params}[/yellow]  [blue]{quant}[/blue]  [white]{family}[/white] [cyan]{ctx}[/cyan]")
-            else:
-                click.echo(f"{i} {name}  size={size} params={params} quant={quant} family={family} ctx={ctx}")
+            console.print(f"[cyan]{i}[/cyan] [green]{name}[/green]  [magenta]{size}[/magenta]  [yellow]{params}[/yellow]  [blue]{quant}[/blue]  [white]{family}[/white] [cyan]{ctx}[/cyan]")
 
 
 @cli.command("list-models")
