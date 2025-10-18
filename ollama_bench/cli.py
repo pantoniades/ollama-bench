@@ -9,7 +9,7 @@ import json
 import logging
 import sys
 from datetime import datetime
-from typing import Optional, Sequence, Union, List
+from typing import Optional, Sequence, List
 
 from .models import Model
 
@@ -17,6 +17,7 @@ import click
 
 from .client import OllamaClient
 from rich.console import Console
+from asyncio import TimeoutError
 
 logger = logging.getLogger("ollama_bench")
 
@@ -39,45 +40,24 @@ def cli(verbose: bool) -> None:
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logger.info(f"Starting ollama-bench CLI at {now}, verbose={verbose}")
 
-def _print_models(models: Sequence[Union[str, Model]], fmt: str = "pretty", color: bool = True) -> None:
+def _print_models(models: Sequence[Model], fmt: str = "pretty", color: bool = True) -> None:
     """Print models in either 'pretty' (multi-line) or 'compact' (single-line) format.
 
     color: whether to use color/ANSI Rich formatting (respects NO_COLOR env var).
     """
-    def _name(m):
-        return m.name if isinstance(m, Model) else str(m)
-
-    def _get(m, attr, default="-"):
-        return getattr(m, attr, default) or default
-
-    # Create a console that respects the color setting
     console = Console(no_color=not color, force_terminal=color)
 
     if fmt == "pretty":
         for m in models:
-            name = _name(m)
-            size = _get(m, "size")
-            params = _get(m, "parameter_size")
-            quant = _get(m, "quantization_level")
-            family = _get(m, "family")
-            ctx = _get(m, "context_length")
-
-            console.print(f"[bold green]{name}[/bold green]")
-            console.print(f"  [magenta]size:[/magenta] {size}")
-            console.print(f"  [yellow]params:[/yellow] {params}  [blue]quant:[/blue] {quant}")
-            console.print(f"  [white]family:[/white] {family}  [cyan]ctx:[/cyan] {ctx}")
+            console.print(f"[bold green]{m.name}[/bold green]")
+            console.print(f"  [magenta]size:[/magenta] {m.size or '-'}")
+            console.print(f"  [yellow]params:[/yellow] {m.parameter_size or '-'}  [blue]quant:[/blue] {m.quantization_level or '-'}")
+            console.print(f"  [white]family:[/white] {m.family or '-'}  [cyan]ctx:[/cyan] {m.context_length or '-'}")
             console.print("")
 
     else:  # compact
         for i, m in enumerate(models, start=1):
-            name = _name(m)
-            size = _get(m, "size")
-            params = _get(m, "parameter_size")
-            quant = _get(m, "quantization_level")
-            family = _get(m, "family")
-            ctx = _get(m, "context_length")
-
-            console.print(f"[cyan]{i}[/cyan] [green]{name}[/green]  [magenta]{size}[/magenta]  [yellow]{params}[/yellow]  [blue]{quant}[/blue]  [white]{family}[/white] [cyan]{ctx}[/cyan]")
+            console.print(f"[cyan]{i}[/cyan] [green]{m.name}[/green]  [magenta]{m.size or '-'}[/magenta]  [yellow]{m.parameter_size or '-'}[/yellow]  [blue]{m.quantization_level or '-'}[/blue]  [white]{m.family or '-'}[/white] [cyan]{m.context_length or '-'}[/cyan]")
 
 
 @cli.command("list-models")
@@ -178,9 +158,14 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
                     coro = client.generate(m.name, prompt_text)
                     resp = await asyncio.wait_for(coro, timeout=timeout)
                     status = "ok"
+                except TimeoutError as te:
+                    resp = {"error": "Generate timed out"}
+                    status = "timeout"
+                    logger.error(f"Timeout generating for model {m.name} after {timeout}s")
                 except Exception as exc:
                     resp = {"error": str(exc)}
                     status = "error"
+                    logger.error(f"Error generating for model {m.name}: {type(exc)}")
                 elapsed = asyncio.get_event_loop().time() - start
                 return {"model": m, "status": status, "elapsed": elapsed, "response": resp}
 
@@ -203,14 +188,15 @@ def benchmark(prompt_text: Optional[str], prompt_file: Optional[str], concurrenc
 
             # Print results
             for r in results:
-                if r["status"] == "error":
-                    click.echo(f"Model {r['model'].name} error: {r['response']['error']}\n", err=True)
+                current_model = r["model"]
+                if r["status"] != "ok":
+                    click.echo(f"Model {current_model.name} {r['status']} after {r['elapsed']:.3f}s: {r['response']['error']}\n'") 
                     continue
-                click.echo(r["model"].name)
+                click.echo( current_model.name)
                 click.echo(f"  status: {r['status']}")
-                click.echo(f". size: {( r['model'].size / 1024**3):.2f} GB")
+                click.echo(f"  size: {( current_model.size / 1024**3):.2f} GB")
                 click.echo(f"  elapsed: {r['elapsed']:.3f}s")
-                click.echo(f". prompt_eval_count: {r['response'].get('prompt_eval_count', '-')}")
+                click.echo(f"  prompt_eval_count: {r['response'].get('prompt_eval_count', '-')}")
                 click.echo(f"  prompt rate: {(r['response']['prompt_eval_count']/ r['response']['prompt_eval_duration']*(10**9)):.2f} tokens/s")
                 click.echo(f"  response rate: {(r['response']['eval_count']/ r['response']['eval_duration']*(10**9)):.3f} tokens/s")
                 response and click.echo(f"  response: {json.dumps(r['response'], default=str, indent=2)}")
