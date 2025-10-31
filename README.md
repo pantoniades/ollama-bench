@@ -17,7 +17,7 @@ A CLI tool for benchmarking and testing [Ollama](https://ollama.ai/) LLM models.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ollama-bench.git
+git clone https://github.com/pantoniades/ollama-bench.git
 cd ollama-bench
 
 # Create and activate virtual environment

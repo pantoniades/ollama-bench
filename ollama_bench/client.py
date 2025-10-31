@@ -11,6 +11,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import ollama
+import asyncio
 from .models import Model
 
 logger = logging.getLogger(__name__)
@@ -22,11 +23,20 @@ class OllamaClient:
     This simplified client assumes the `ollama` library exposes the
     documented `AsyncClient` methods (for example `list`, `generate`,
     `chat`). It no longer performs runtime discovery of method names.
+    Will default to 'localhost:11434' if no hostname/port is passed in
     """
 
-    def __init__(self, host: Optional[str] = None):
+    def __init__(self, host: Optional[str] = "localhost:11434"):
         self.host = host
-        self._client = ollama.AsyncClient(host=self.host) 
+        self._client = ollama.AsyncClient(host=self.host)
+        # Test the connection
+        try:
+            # Using sync client
+            response =  ollama.Client(self.host).list() 
+            logger.info(f"Con connect to {self.host}")
+        except Exception as e:
+            logger.error(f"Connection failed for host {self.host}: {e}\n")
+            raise e
 
     async def close(self) -> None:
         if self._client is None:
