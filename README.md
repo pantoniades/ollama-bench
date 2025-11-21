@@ -15,9 +15,33 @@ Benchmark and evaluate [Ollama](https://ollama.ai/) LLM models. Compare performa
 ```bash
 git clone https://github.com/pantoniades/ollama-bench.git
 cd ollama-bench
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Verify venv is activated (should see (.venv) in prompt)
+pip install --upgrade pip
 pip install -e .
+
+# Verify installation
+python verify_install.py
+```
+
+**Note:**
+- Requires pip 21.3+ for pyproject.toml support
+- **IMPORTANT:** Always activate the venv before running commands
+- If you get "module not found" errors, your venv is not activated
+- Run `python verify_install.py` anytime to check your setup
+
+**If `ollama-bench` command not found after install:**
+```bash
+# Option 1: Use python -m instead
+python -m ollama_bench benchmark
+
+# Option 2: Check if venv is activated (should see (.venv) in prompt)
+source .venv/bin/activate  # or deactivate and reactivate
+
+# Option 3: Use full path
+.venv/bin/ollama-bench benchmark
 ```
 
 ## Prerequisites
@@ -33,6 +57,7 @@ ollama serve
 ```bash
 # Benchmark all models (outputs JSON)
 ollama-bench benchmark
+# Or if command not found: python -m ollama_bench benchmark
 
 # Benchmark specific models with multiple prompts
 ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json
@@ -206,6 +231,17 @@ claude "Review these LLM benchmark results and rate each response for accuracy a
 - Dependencies: `ollama`, `click`, `rich` (auto-installed)
 
 ## Troubleshooting
+
+**"click not found" or "module not found":**
+```bash
+# Your venv is not activated. Activate it:
+source .venv/bin/activate  # You should see (.venv) in prompt
+
+# Verify it worked:
+python -c "import click; print('Dependencies loaded')"
+```
+
+**Command not found:** Use `python -m ollama_bench` instead of `ollama-bench`, or ensure venv is activated
 
 **Connection refused:** Ensure Ollama is running (`ollama serve`)
 
