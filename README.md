@@ -1,258 +1,184 @@
 # ollama-bench
 
-A CLI tool for benchmarking and testing [Ollama](https://ollama.ai/) LLM models. Compare performance metrics, list available models, and test generation across different models.
+Benchmark and evaluate [Ollama](https://ollama.ai/) LLM models. Compare performance, test multiple prompts, export results for quality evaluation.
 
 ## Features
 
-- **List Models**: View all available models on your Ollama server with detailed information
-- **Generate**: Test text generation with any model
-- **Benchmark**: Compare multiple models with standardized prompts and timing metrics
-- **Rich Output**: Colorful, formatted terminal output using Rich library
-- **Async Performance**: Built with async/await for efficient concurrent requests
-- **Flexible Configuration**: Support for custom Ollama hosts via environment variables
+- **JSON output** (default) - pipe results to Claude/GPT for quality evaluation
+- **Multiple prompts** - test models across diverse inputs
+- **Performance metrics** - tokens/sec, latency, response time
+- **Concurrent requests** - async execution for faster benchmarking
+- **List models** - view available models with details
 
 ## Installation
 
-### From Source
-
 ```bash
-# Clone the repository
 git clone https://github.com/pantoniades/ollama-bench.git
 cd ollama-bench
-
-# Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Or install in editable mode with development dependencies
-pip install -e ".[dev]"
-```
-
-### As a Package
-
-```bash
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
-After installation, you can run the tool using either:
-- `ollama-bench` (if installed as package)
-- `python -m ollama_bench` (running as module)
+## Prerequisites
 
-## Usage
-
-### Prerequisites
-
-Make sure you have [Ollama](https://ollama.ai/) installed and running:
+Ensure [Ollama](https://ollama.ai/) is running:
 
 ```bash
 ollama serve
 ```
 
-### List Available Models
-
-View all models on your Ollama server:
+## Quick Start
 
 ```bash
-ollama-bench list-models
-```
-
-Options:
-- `--print-format` - Output format: `pretty` (default, multi-line) or `compact` (single-line)
-- `--no-color` - Disable colored output
-- `--host` - Ollama server URL (or set `OLLAMA_HOST` env var)
-
-Examples:
-
-```bash
-# Compact format
-ollama-bench list-models --print-format compact
-
-# Plain text output
-ollama-bench list-models --no-color
-
-# Custom host
-ollama-bench list-models --host http://localhost:11434
-```
-
-### Generate Text
-
-Generate text from a specific model:
-
-```bash
-ollama-bench generate llama2 "Explain quantum computing in simple terms"
-```
-
-### Benchmark Models
-
-Compare performance across models:
-
-```bash
-# Benchmark all models with default prompt
+# Benchmark all models (outputs JSON)
 ollama-bench benchmark
 
-# Benchmark specific models
-ollama-bench benchmark -m llama2 -m mistral
+# Benchmark specific models with multiple prompts
+ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json
 
-# Use custom prompt
-ollama-bench benchmark --prompt "Write a haiku about programming"
-
-# Use prompt from file
-ollama-bench benchmark --prompt-file prompts/test.txt
-
-# Concurrent requests for faster benchmarking
-ollama-bench benchmark -c 3
-
-# Custom timeout (default 30s)
-ollama-bench benchmark --timeout 60
-
-# Show full response details
-ollama-bench benchmark -r
-
-# Enable verbose logging (note: -v comes before subcommand)
-ollama-bench -v benchmark -m llama2
+# Then evaluate with Claude
+claude "Rate these LLM responses: $(cat results.json)"
 ```
 
-The benchmark command shows:
-- Model name and size
-- Request status
-- Elapsed time
-- Prompt processing rate (tokens/s)
-- Response generation rate (tokens/s)
+## Commands
+
+### benchmark
+
+```bash
+# Basic usage
+ollama-bench benchmark                    # All models, default prompt, JSON output
+ollama-bench benchmark -m llama2          # Specific model
+ollama-bench benchmark --prompt "..."     # Custom prompt
+ollama-bench benchmark -P prompts.txt     # Multiple prompts (one per line)
+
+# Output control
+ollama-bench benchmark -o results.json    # Save to file
+ollama-bench benchmark -f text            # Text format instead of JSON
+ollama-bench benchmark -r                 # Include full response text
+
+# Performance
+ollama-bench benchmark -c 3               # Run 3 requests concurrently
+ollama-bench benchmark -t 60              # 60 second timeout
+
+# Combined example
+ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json -c 2
+```
+
+**Options:**
+- `--prompt TEXT` - Single prompt text
+- `-P, --prompts-file PATH` - File with prompts (one per line)
+- `-m, --model TEXT` - Specific model(s) to test (repeatable)
+- `-c, --concurrent INT` - Concurrent requests (default: 1)
+- `-t, --timeout FLOAT` - Timeout in seconds (default: 30)
+- `-f, --format [json|text]` - Output format (default: json)
+- `-o, --output PATH` - Write to file instead of stdout
+- `-r, --response` - Include full response text
+- `-H, --host TEXT` - Ollama server URL (or set `OLLAMA_HOST`)
+
+### list-models
+
+```bash
+ollama-bench list-models              # Pretty format
+ollama-bench list-models -f compact   # One line per model
+ollama-bench list-models -n           # No color
+```
+
+**Options:**
+- `-f, --print-format [pretty|compact]` - Output format (default: pretty)
+- `-n, --no-color` - Disable colored output
+- `-H, --host TEXT` - Ollama server URL
+
+### generate
+
+```bash
+ollama-bench generate llama2 "Explain quantum computing"
+```
+
+## JSON Output Format
+
+```json
+{
+  "config": {
+    "prompts": ["What is 2+2?"],
+    "models": ["llama2"],
+    "concurrency": 1,
+    "timeout": 30.0
+  },
+  "results": [
+    {
+      "model": "llama2",
+      "prompt": "What is 2+2?",
+      "status": "ok",
+      "elapsed": 1.234,
+      "metrics": {
+        "prompt_eval_count": 10,
+        "eval_count": 25,
+        "prompt_tokens_per_sec": 123.45,
+        "response_tokens_per_sec": 67.89
+      },
+      "response": "The answer is 4."
+    }
+  ]
+}
+```
 
 ## Configuration
 
 ### Environment Variables
 
-- `OLLAMA_HOST` - Ollama server URL (default: system default, usually `http://localhost:11434`)
-- `NO_COLOR` - Disable colored output (set to any value)
-
-Example:
-
-```bash
-export OLLAMA_HOST=http://192.168.1.100:11434
-ollama-bench list-models
-```
+- `OLLAMA_HOST` - Server URL (default: http://localhost:11434)
+- `NO_COLOR` - Disable colored output
 
 ### Global Options
 
-- `--verbose` / `-v` - Enable debug logging for troubleshooting
-
-**Important**: Global options must come **before** the subcommand name:
+- `-v, --verbose` - Enable debug logging (must come before subcommand)
 
 ```bash
-# ✅ CORRECT - verbose flag before subcommand
-ollama-bench -v benchmark -m llama2
-ollama-bench --verbose list-models
-
-# ❌ INCORRECT - verbose flag after subcommand (won't work)
-ollama-bench benchmark -v -m llama2
+ollama-bench -v benchmark -m llama2  # ✅ Correct
+ollama-bench benchmark -v -m llama2  # ❌ Wrong
 ```
 
-This is how Click command groups work - global options belong to the main command, not the subcommands.
-
 ## Development
-
-### Setup Development Environment
 
 ```bash
 # Install with dev dependencies
 pip install -e ".[dev]"
 
 # Run tests
-pytest
-
-# Run tests with verbose output
 pytest -v
 ```
 
-### Project Structure
-
-```
-ollama-bench/
-├── ollama_bench/
-│   ├── __init__.py       # Package version
-│   ├── __main__.py       # Module entry point
-│   ├── cli.py            # Click CLI commands
-│   ├── client.py         # Ollama async client wrapper
-│   └── models.py         # Data models
-├── tests/
-│   ├── test_client.py
-│   ├── test_cli.py
-│   └── test_smoke.py
-├── pyproject.toml        # Project configuration
-├── requirements.txt      # Dependencies
-└── README.md            # This file
-```
-
-## Examples
-
-### Quick Performance Comparison
+## Example Workflow
 
 ```bash
-# Compare two models on the same prompt
-ollama-bench benchmark -m llama2:7b -m mistral:7b --prompt "What is machine learning?"
-```
+# Create prompts file
+cat > prompts.txt << EOF
+What is 2+2?
+Explain quantum computing in one sentence.
+Write a haiku about programming.
+What is the capital of France?
+EOF
 
-### Automated Testing Script
+# Benchmark models with full responses
+ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json
 
-```bash
-#!/bin/bash
-# test_models.sh - Test all models with multiple prompts
-
-for prompt_file in prompts/*.txt; do
-    echo "Testing with $(basename $prompt_file)..."
-    ollama-bench benchmark --prompt-file "$prompt_file" -c 2
-done
-```
-
-### Check Model Availability
-
-```bash
-# Quickly check what models are available
-ollama-bench list-models --print-format compact --no-color | grep llama
+# Evaluate quality with Claude
+claude "Review these LLM benchmark results and rate each response for accuracy and quality: $(cat results.json)"
 ```
 
 ## Requirements
 
 - Python 3.10+
-- Ollama server (running locally or accessible via network)
-- Dependencies:
-  - `ollama>=0.6.0` - Official Ollama Python library
-  - `click>=8.0.0` - CLI framework
-  - `rich>=14.0.0` - Terminal formatting
+- Ollama server
+- Dependencies: `ollama`, `click`, `rich` (auto-installed)
+
+## Troubleshooting
+
+**Connection refused:** Ensure Ollama is running (`ollama serve`)
+
+**Slow performance:** Increase concurrency (`-c 5`), but don't overload your system
 
 ## License
 
 MIT
-
-## Contributing
-
-Contributions welcome! Please feel free to submit a Pull Request.
-
-## Troubleshooting
-
-### "Connection refused" Error
-
-Make sure Ollama is running:
-```bash
-ollama serve
-```
-
-### "Module not found" Error
-
-Ensure you've installed dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-### Slow Performance
-
-Try increasing concurrency for benchmarks:
-```bash
-ollama-bench benchmark -c 5
-```
-
-Note: High concurrency may overload your system or Ollama server.
