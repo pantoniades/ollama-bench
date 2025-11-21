@@ -4,10 +4,10 @@ Benchmark and evaluate [Ollama](https://ollama.ai/) LLM models. Compare performa
 
 ## Features
 
-- **JSON output** (default) - pipe results to Claude/GPT for quality evaluation
+- **JSON output** (default) - pipe results to (e.g.) Claude/GPT/Gemini for quality evaluation
 - **Multiple prompts** - test models across diverse inputs
 - **Performance metrics** - tokens/sec, latency, response time
-- **Concurrent requests** - async execution for faster benchmarking
+- **Concurrent requests** - async execution for volume benchmarking
 - **List models** - view available models with details
 
 ## Installation
@@ -55,7 +55,7 @@ ollama-bench benchmark -P prompts.txt     # Multiple prompts (one per line)
 # Output control
 ollama-bench benchmark -o results.json    # Save to file
 ollama-bench benchmark -f text            # Text format instead of JSON
-ollama-bench benchmark -r                 # Include full response text
+ollama-bench benchmark -r                 # Include full response text (defualts to results only)
 
 # Performance
 ollama-bench benchmark -c 3               # Run 3 requests concurrently
@@ -70,13 +70,18 @@ ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json -c
 - `-P, --prompts-file PATH` - File with prompts (one per line)
 - `-m, --model TEXT` - Specific model(s) to test (repeatable)
 - `-c, --concurrent INT` - Concurrent requests (default: 1)
+- `--concurrency-mode [global|per-model]` - How concurrency works (default: per-model)
+  - `per-model`: Run N prompts concurrently for each model (tests model's concurrent handling)
+  - `global`: Run N total tasks concurrently across all models
 - `-t, --timeout FLOAT` - Timeout in seconds (default: 30)
 - `-f, --format [json|text]` - Output format (default: json)
 - `-o, --output PATH` - Write to file instead of stdout
 - `-r, --response` - Include full response text
+- `--exclude-errors` - Don't write failed results to output
+- `--errors-only` - Only write failed results (useful for debugging)
 - `-H, --host TEXT` - Ollama server URL (or set `OLLAMA_HOST`)
 
-### list-models
+### list-models (more info & formatting than `ollama list`)
 
 ```bash
 ollama-bench list-models              # Pretty format
@@ -97,12 +102,14 @@ ollama-bench generate llama2 "Explain quantum computing"
 
 ## JSON Output Format
 
+**Success:**
 ```json
 {
   "config": {
     "prompts": ["What is 2+2?"],
     "models": ["llama2"],
     "concurrency": 1,
+    "concurrency_mode": "per-model",
     "timeout": 30.0
   },
   "results": [
@@ -120,6 +127,22 @@ ollama-bench generate llama2 "Explain quantum computing"
       "response": "The answer is 4."
     }
   ]
+}
+```
+
+**Error:**
+```json
+{
+  "model": "broken-model",
+  "prompt": "What is 2+2?",
+  "status": "error",
+  "elapsed": 0.123,
+  "error": {
+    "type": "ConnectionError",
+    "message": "Connection refused",
+    "model": "broken-model",
+    "prompt": "What is 2+2?"
+  }
 }
 ```
 
@@ -160,8 +183,17 @@ Write a haiku about programming.
 What is the capital of France?
 EOF
 
-# Benchmark models with full responses
-ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json
+# Benchmark models with full responses (per-model concurrency)
+ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -c 3 -o results.json
+
+# Test concurrent load handling: run 3 prompts at once per model
+ollama-bench benchmark -P prompts.txt -c 3 --concurrency-mode per-model
+
+# Only save successful results
+ollama-bench benchmark -P prompts.txt --exclude-errors -o results.json
+
+# Debug: only show errors
+ollama-bench benchmark -P prompts.txt --errors-only -f text
 
 # Evaluate quality with Claude
 claude "Review these LLM benchmark results and rate each response for accuracy and quality: $(cat results.json)"
@@ -176,8 +208,6 @@ claude "Review these LLM benchmark results and rate each response for accuracy a
 ## Troubleshooting
 
 **Connection refused:** Ensure Ollama is running (`ollama serve`)
-
-**Slow performance:** Increase concurrency (`-c 5`), but don't overload your system
 
 ## License
 

@@ -6,6 +6,7 @@ information when requested.
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
 import logging
 from typing import Any, Dict, List, Optional
@@ -23,7 +24,7 @@ class OllamaClient:
     This simplified client assumes the `ollama` library exposes the
     documented `AsyncClient` methods (for example `list`, `generate`,
     `chat`). It no longer performs runtime discovery of method names.
-    Will default to 'localhost:11434' if no hostname/port is passed in
+    Will default to 'localhost:11434' if no hostname/port is passed in.
     """
 
     def __init__(self, host: Optional[str] = "localhost:11434"):
@@ -32,8 +33,8 @@ class OllamaClient:
         # Test the connection
         try:
             # Using sync client
-            response =  ollama.Client(self.host).list() 
-            logger.info(f"Con connect to {self.host}")
+            response = ollama.Client(self.host).list()
+            logger.info(f"Connected to {self.host}")
         except Exception as e:
             logger.error(f"Connection failed for host {self.host}: {e}\n")
             raise e
