@@ -1,4 +1,4 @@
-# ollama-bench
+# unladen-swallm
 
 Benchmark and evaluate [Ollama](https://ollama.ai/) LLM models. Compare performance, test multiple prompts, export results for quality evaluation.
 
@@ -13,8 +13,8 @@ Benchmark and evaluate [Ollama](https://ollama.ai/) LLM models. Compare performa
 ## Installation
 
 ```bash
-git clone https://github.com/pantoniades/ollama-bench.git
-cd ollama-bench
+git clone https://github.com/pantoniades/unladen-swallm.git
+cd unladen-swallm
 python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
@@ -32,16 +32,16 @@ python verify_install.py
 - If you get "module not found" errors, your venv is not activated
 - Run `python verify_install.py` anytime to check your setup
 
-**If `ollama-bench` command not found after install:**
+**If `swallm` command not found after install:**
 ```bash
 # Option 1: Use python -m instead
-python -m ollama_bench benchmark
+python -m unladen_swallm benchmark
 
 # Option 2: Check if venv is activated (should see (.venv) in prompt)
 source .venv/bin/activate  # or deactivate and reactivate
 
 # Option 3: Use full path
-.venv/bin/ollama-bench benchmark
+.venv/bin/swallm benchmark
 ```
 
 ## Prerequisites
@@ -56,11 +56,11 @@ ollama serve
 
 ```bash
 # Benchmark all models (outputs JSON)
-ollama-bench benchmark
-# Or if command not found: python -m ollama_bench benchmark
+swallm benchmark
+# Or if command not found: python -m unladen_swallm benchmark
 
 # Benchmark specific models with multiple prompts
-ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json
+swallm benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json
 
 # Then evaluate with Claude
 claude "Rate these LLM responses: $(cat results.json)"
@@ -72,22 +72,22 @@ claude "Rate these LLM responses: $(cat results.json)"
 
 ```bash
 # Basic usage
-ollama-bench benchmark                    # All models, default prompt, JSON output
-ollama-bench benchmark -m llama2          # Specific model
-ollama-bench benchmark --prompt "..."     # Custom prompt
-ollama-bench benchmark -P prompts.txt     # Multiple prompts (one per line)
+swallm benchmark                    # All models, default prompt, JSON output
+swallm benchmark -m llama2          # Specific model
+swallm benchmark --prompt "..."     # Custom prompt
+swallm benchmark -P prompts.txt     # Multiple prompts (one per line)
 
 # Output control
-ollama-bench benchmark -o results.json    # Save to file
-ollama-bench benchmark -f text            # Text format instead of JSON
-ollama-bench benchmark -r                 # Include full response text (defualts to results only)
+swallm benchmark -o results.json    # Save to file
+swallm benchmark -f text            # Text format instead of JSON
+swallm benchmark -r                 # Include full response text (defualts to results only)
 
 # Performance
-ollama-bench benchmark -c 3               # Run 3 requests concurrently
-ollama-bench benchmark -t 60              # 60 second timeout
+swallm benchmark -c 3               # Run 3 requests concurrently
+swallm benchmark -t 60              # 60 second timeout
 
 # Combined example
-ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json -c 2
+swallm benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json -c 2
 ```
 
 **Options:**
@@ -109,9 +109,9 @@ ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json -c
 ### list-models (more info & formatting than `ollama list`)
 
 ```bash
-ollama-bench list-models              # Pretty format
-ollama-bench list-models -f compact   # One line per model
-ollama-bench list-models -n           # No color
+swallm list-models              # Pretty format
+swallm list-models -f compact   # One line per model
+swallm list-models -n           # No color
 ```
 
 **Options:**
@@ -122,7 +122,7 @@ ollama-bench list-models -n           # No color
 ### generate
 
 ```bash
-ollama-bench generate llama2 "Explain quantum computing"
+swallm generate llama2 "Explain quantum computing"
 ```
 
 ## JSON Output Format
@@ -183,8 +183,8 @@ ollama-bench generate llama2 "Explain quantum computing"
 - `-v, --verbose` - Enable debug logging (must come before subcommand)
 
 ```bash
-ollama-bench -v benchmark -m llama2  # ✅ Correct
-ollama-bench benchmark -v -m llama2  # ❌ Wrong
+swallm -v benchmark -m llama2  # ✅ Correct
+swallm benchmark -v -m llama2  # ❌ Wrong
 ```
 
 ## Development
@@ -209,16 +209,16 @@ What is the capital of France?
 EOF
 
 # Benchmark models with full responses (per-model concurrency)
-ollama-bench benchmark -P prompts.txt -m llama2 -m mistral -r -c 3 -o results.json
+swallm benchmark -P prompts.txt -m llama2 -m mistral -r -c 3 -o results.json
 
 # Test concurrent load handling: run 3 prompts at once per model
-ollama-bench benchmark -P prompts.txt -c 3 --concurrency-mode per-model
+swallm benchmark -P prompts.txt -c 3 --concurrency-mode per-model
 
 # Only save successful results
-ollama-bench benchmark -P prompts.txt --exclude-errors -o results.json
+swallm benchmark -P prompts.txt --exclude-errors -o results.json
 
 # Debug: only show errors
-ollama-bench benchmark -P prompts.txt --errors-only -f text
+swallm benchmark -P prompts.txt --errors-only -f text
 
 # Evaluate quality with Claude
 claude "Review these LLM benchmark results and rate each response for accuracy and quality: $(cat results.json)"
@@ -241,7 +241,7 @@ source .venv/bin/activate  # You should see (.venv) in prompt
 python -c "import click; print('Dependencies loaded')"
 ```
 
-**Command not found:** Use `python -m ollama_bench` instead of `ollama-bench`, or ensure venv is activated
+**Command not found:** Use `python -m unladen_swallm` instead of `swallm`, or ensure venv is activated
 
 **Connection refused:** Ensure Ollama is running (`ollama serve`)
 

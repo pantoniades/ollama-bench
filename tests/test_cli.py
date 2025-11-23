@@ -10,7 +10,7 @@ def test_cli_list_models(monkeypatch):
             pass
 
         async def list_models(self):
-            from ollama_bench.models import Model
+            from unladen_swallm.models import Model
 
             return [Model(name="one"), Model(name="two")]
 
@@ -18,9 +18,9 @@ def test_cli_list_models(monkeypatch):
             return None
 
     # Monkeypatch the constructor used in the CLI module path
-    monkeypatch.setattr("ollama_bench.cli.OllamaClient", FakeClient)
+    monkeypatch.setattr("unladen_swallm.cli.OllamaClient", FakeClient)
 
-    from ollama_bench.cli import cli
+    from unladen_swallm.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(cli, ["list-models"])
@@ -36,15 +36,15 @@ def test_cli_compact_and_no_color(monkeypatch):
             pass
 
         async def list_models(self):
-            from ollama_bench.models import Model
+            from unladen_swallm.models import Model
 
             return [Model(name="alpha", size="1.4 GB", parameter_size="7B", quantization_level="q4_0", family="gemma", context_length=8192)]
 
         async def close(self):
             return None
 
-    monkeypatch.setattr("ollama_bench.cli.OllamaClient", FakeClient2)
-    from ollama_bench.cli import cli
+    monkeypatch.setattr("unladen_swallm.cli.OllamaClient", FakeClient2)
+    from unladen_swallm.cli import cli
 
     runner = CliRunner()
     # compact format
@@ -71,9 +71,9 @@ def test_cli_generate(monkeypatch):
         async def close(self):
             return None
 
-    monkeypatch.setattr("ollama_bench.cli.OllamaClient", FakeClient)
+    monkeypatch.setattr("unladen_swallm.cli.OllamaClient", FakeClient)
 
-    from ollama_bench.cli import cli
+    from unladen_swallm.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(cli, ["generate", "mymodel", "hello"])

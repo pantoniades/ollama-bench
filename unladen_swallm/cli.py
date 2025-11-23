@@ -21,7 +21,7 @@ from .client import OllamaClient
 from rich.console import Console
 from asyncio import TimeoutError
 
-logger = logging.getLogger("ollama_bench")
+logger = logging.getLogger("unladen_swallm")
 
 _CONSOLE = Console()
 
@@ -58,11 +58,11 @@ def _format_size(size) -> str:
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging")
 def cli(verbose: bool) -> None:
-    """ollama-bench CLI"""
+    """swallm - Benchmark Ollama LLM models"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logger.info(f"Starting ollama-bench CLI at {now}, verbose={verbose}")
+    logger.info(f"Starting swallm at {now}, verbose={verbose}")
 
 def _print_models(models: Sequence[Model], fmt: str = "pretty", color: bool = True) -> None:
     """Print models in either 'pretty' (multi-line) or 'compact' (single-line) format.

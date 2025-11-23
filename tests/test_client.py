@@ -18,8 +18,8 @@ def test_list_models_returns_names(monkeypatch):
 
     monkeypatch.setattr("ollama.AsyncClient", FakeAsyncClient)
 
-    from ollama_bench.client import OllamaClient
-    from ollama_bench.models import Model
+    from unladen_swallm.client import OllamaClient
+    from unladen_swallm.models import Model
 
     client = OllamaClient(host=None)
     models = asyncio.run(client.list_models())
@@ -46,10 +46,10 @@ def test_list_models_handles_streaming(monkeypatch):
 
     monkeypatch.setattr("ollama.AsyncClient", FakeAsyncClient)
 
-    from ollama_bench.client import OllamaClient
+    from unladen_swallm.client import OllamaClient
 
-    from ollama_bench.client import OllamaClient
-    from ollama_bench.models import Model
+    from unladen_swallm.client import OllamaClient
+    from unladen_swallm.models import Model
 
     client = OllamaClient(host=None)
     models = asyncio.run(client.list_models())

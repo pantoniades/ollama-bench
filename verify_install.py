@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify ollama-bench installation and dependencies."""
+"""Verify swallm installation and dependencies."""
 import sys
 
 def check_dependency(name):
@@ -12,7 +12,7 @@ def check_dependency(name):
         return False
 
 def main():
-    print("Checking ollama-bench installation...\n")
+    print("Checking swallm installation...\n")
 
     # Check Python version
     py_version = sys.version_info
@@ -28,13 +28,13 @@ def main():
     all_ok &= check_dependency("click")
     all_ok &= check_dependency("rich")
     all_ok &= check_dependency("ollama")
-    all_ok &= check_dependency("ollama_bench")
+    all_ok &= check_dependency("unladen_swallm")
 
     print()
     if all_ok:
         print("✓ All dependencies installed!")
-        print("\nYou can run: ollama-bench benchmark")
-        print("Or: python -m ollama_bench benchmark")
+        print("\nYou can run: swallm benchmark")
+        print("Or: python -m unladen_swallm benchmark")
         return True
     else:
         print("✗ Some dependencies missing!")
