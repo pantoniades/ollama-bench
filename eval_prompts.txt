@@ -1,0 +1,3 @@
+Give me a one-paragraph explanation of quantum entanglement using a five-word metaphorical title.
+You have a backpack with a 15kg weight limit. Choose the optimal combination of these items—camera (5kg), laptop (3kg), tent (7kg), food pack (6kg), and water (2kg)—to maximize utility for a 2-day hiking trip. Explain your reasoning in under 120 words.
+Write a 4-line poem about urban solitude where each line ends with a word starting with the letter 'S'.
