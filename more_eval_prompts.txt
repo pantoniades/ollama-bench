@@ -2,9 +2,19 @@ Give me a one-paragraph explanation of quantum entanglement using a five-word me
 You have a backpack with a 15kg weight limit. Choose the optimal combination of these items—camera (5kg), laptop (3kg), tent (7kg), food pack (6kg), and water (2kg)—to maximize utility for a 2-day hiking trip. Explain your reasoning in under 120 words.
 Write a formal haiku about urban solitude where each line ends with a word starting with the letter 'S'.
 Write a Python function to find all prime numbers up to N using the Sieve of Eratosthenes. Include type hints and handle edge cases.
-Give me a one-paragraph explanation of quantum entanglement using a five-word metaphorical title.
 A farmer has 17 sheep, and all but 9 die. How many sheep are left? Explain your reasoning step by step.
-You have a backpack with a 15kg weight limit. Choose the optimal combination of these items—camera (5kg), laptop (3kg), tent (7kg), food pack (6kg), and water (2kg)—to maximize utility for a 2-day hiking trip. Explain your reasoning in under 120 words.
-Write a formal haiku about urban solitude where each line ends with a word starting with the letter 'S'.
-Write a Python function to find all prime numbers up to N using the Sieve of Eratosthenes. Include type hints and handle edge cases.
-A farmer has 17 sheep, and all but 9 die. How many sheep are left? Explain your reasoning step by step.
+Write a function to detect palindromes. Then explain why 'racecar' is one but 'python' isn't.
+Write exactly 3 sentences about machine learning. The first sentence must contain the word 'algorithm', the second must be exactly 12 words long, and the third must end with a question mark.
+"""
+This Python function is supposed to remove duplicates from a list while preserving order, but it has a bug. Find and fix it:
+
+def remove_dupes(lst):
+    seen = set()
+    for item in lst:
+        if item not in seen:
+            seen.add(item)
+    return seen
+"""
+Explain TCP/IP in 100 words with exactly 3 paragraphs
+Write a joke about bicycles that would make a Zen Bhuddist laugh
+
