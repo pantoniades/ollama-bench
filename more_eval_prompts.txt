@@ -1,0 +1,10 @@
+Give me a one-paragraph explanation of quantum entanglement using a five-word metaphorical title.
+You have a backpack with a 15kg weight limit. Choose the optimal combination of these items—camera (5kg), laptop (3kg), tent (7kg), food pack (6kg), and water (2kg)—to maximize utility for a 2-day hiking trip. Explain your reasoning in under 120 words.
+Write a formal haiku about urban solitude where each line ends with a word starting with the letter 'S'.
+Write a Python function to find all prime numbers up to N using the Sieve of Eratosthenes. Include type hints and handle edge cases.
+Give me a one-paragraph explanation of quantum entanglement using a five-word metaphorical title.
+A farmer has 17 sheep, and all but 9 die. How many sheep are left? Explain your reasoning step by step.
+You have a backpack with a 15kg weight limit. Choose the optimal combination of these items—camera (5kg), laptop (3kg), tent (7kg), food pack (6kg), and water (2kg)—to maximize utility for a 2-day hiking trip. Explain your reasoning in under 120 words.
+Write a formal haiku about urban solitude where each line ends with a word starting with the letter 'S'.
+Write a Python function to find all prime numbers up to N using the Sieve of Eratosthenes. Include type hints and handle edge cases.
+A farmer has 17 sheep, and all but 9 die. How many sheep are left? Explain your reasoning step by step.
