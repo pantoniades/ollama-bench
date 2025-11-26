@@ -75,7 +75,7 @@ claude "Rate these LLM responses: $(cat results.json)"
 swallm benchmark                    # All models, default prompt, JSON output
 swallm benchmark -m llama2          # Specific model
 swallm benchmark --prompt "..."     # Custom prompt
-swallm benchmark -P prompts.txt     # Multiple prompts (one per line)
+swallm benchmark -P prompts.txt     # Multiple prompts from file
 
 # Output control
 swallm benchmark -o results.json    # Save to file
@@ -92,7 +92,7 @@ swallm benchmark -P prompts.txt -m llama2 -m mistral -r -o results.json -c 2
 
 **Options:**
 - `--prompt TEXT` - Single prompt text
-- `-P, --prompts-file PATH` - File with prompts (one per line)
+- `-P, --prompts-file PATH` - File with prompts (single-line or triple-quote `"""` multi-line)
 - `-m, --model TEXT` - Specific model(s) to test (repeatable)
 - `-c, --concurrent INT` - Concurrent requests (default: 1)
 - `--concurrency-mode [global|per-model]` - How concurrency works (default: per-model)
@@ -200,10 +200,16 @@ pytest -v
 ## Example Workflow
 
 ```bash
-# Create prompts file
-cat > prompts.txt << EOF
+# Create prompts file (supports single-line and triple-quote multi-line)
+cat > prompts.txt << 'EOF'
 What is 2+2?
-Explain quantum computing in one sentence.
+
+"""
+Explain quantum computing.
+Include both theory and
+practical applications.
+"""
+
 Write a haiku about programming.
 What is the capital of France?
 EOF

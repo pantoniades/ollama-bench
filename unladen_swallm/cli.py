@@ -159,7 +159,21 @@ def benchmark(prompt_text: Optional[str], prompts_file: Optional[str], concurren
     prompts = []
     if prompts_file:
         with open(prompts_file, "r", encoding="utf-8") as fh:
-            prompts = [line.strip() for line in fh if line.strip()]
+            content = fh.read()
+            # Parse prompts: support triple-quote multi-line and single-line formats
+            parts = content.split('"""')
+            for i, part in enumerate(parts):
+                if i % 2 == 1:
+                    # Inside triple quotes - treat as single multi-line prompt
+                    stripped = part.strip()
+                    if stripped:
+                        prompts.append(stripped)
+                else:
+                    # Outside triple quotes - each non-empty line is a prompt
+                    for line in part.split('\n'):
+                        stripped = line.strip()
+                        if stripped:
+                            prompts.append(stripped)
     elif prompt_text:
         prompts = [prompt_text]
     else:
