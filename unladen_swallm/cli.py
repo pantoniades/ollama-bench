@@ -62,6 +62,11 @@ def cli(verbose: bool) -> None:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+    # Suppress HTTP request logs from httpx/httpcore
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+
     logger.info(f"Starting swallm at {now}, verbose={verbose}")
 
 def _print_models(models: Sequence[Model], fmt: str = "pretty", color: bool = True) -> None:
@@ -232,15 +237,19 @@ def benchmark(prompt_text: Optional[str], prompts_file: Optional[str], concurren
 
             # Execute with appropriate concurrency mode
             results = []
+            total_tasks = len(selected_models) * len(prompts)
 
             if concurrency_mode == "global":
                 # Global concurrency: limit total concurrent tasks
                 tasks_to_run = [(m, p) for m in selected_models for p in prompts]
+                logger.info(f"Starting benchmark: {len(selected_models)} models × {len(prompts)} prompts = {total_tasks} total tasks (global concurrency={concurrency})")
 
                 if concurrency <= 1:
-                    for m, p in tasks_to_run:
+                    for idx, (m, p) in enumerate(tasks_to_run, 1):
                         r = await run_for_model_and_prompt(m, p)
                         results.append(r)
+                        if idx % 5 == 0:
+                            logger.info(f"Progress: {idx}/{total_tasks} tasks completed")
                 else:
                     sem = asyncio.Semaphore(concurrency)
 
@@ -249,16 +258,24 @@ def benchmark(prompt_text: Optional[str], prompts_file: Optional[str], concurren
                             return await run_for_model_and_prompt(m, p)
 
                     tasks = [asyncio.create_task(sem_task(m, p)) for m, p in tasks_to_run]
+                    completed = 0
                     for t in asyncio.as_completed(tasks):
                         results.append(await t)
+                        completed += 1
+                        if completed % 5 == 0:
+                            logger.info(f"Progress: {completed}/{total_tasks} tasks completed")
             else:
                 # Per-model concurrency: run prompts concurrently within each model
-                for m in selected_models:
+                logger.info(f"Starting benchmark: {len(selected_models)} models × {len(prompts)} prompts = {total_tasks} total tasks (per-model concurrency={concurrency})")
+                for model_idx, m in enumerate(selected_models, 1):
+                    logger.info(f"Model {model_idx}/{len(selected_models)}: {m.name} ({len(prompts)} prompts)")
                     if concurrency <= 1:
                         # Sequential for this model
-                        for p in prompts:
+                        for prompt_idx, p in enumerate(prompts, 1):
                             r = await run_for_model_and_prompt(m, p)
                             results.append(r)
+                            if prompt_idx % 5 == 0:
+                                logger.info(f"  Progress: {prompt_idx}/{len(prompts)} prompts completed for {m.name}")
                     else:
                         # Concurrent prompts for this model
                         sem = asyncio.Semaphore(concurrency)
@@ -268,8 +285,12 @@ def benchmark(prompt_text: Optional[str], prompts_file: Optional[str], concurren
                                 return await run_for_model_and_prompt(model, prompt)
 
                         tasks = [asyncio.create_task(sem_task(m, p)) for p in prompts]
+                        completed = 0
                         for t in asyncio.as_completed(tasks):
                             results.append(await t)
+                            completed += 1
+                            if completed % 5 == 0:
+                                logger.info(f"  Progress: {completed}/{len(prompts)} prompts completed for {m.name}")
 
             # Filter results based on error flags
             filtered_results = results
